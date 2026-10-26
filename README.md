@@ -4,6 +4,19 @@
 
 ---
 
+## 📌 Submission Overview & Evaluator Links
+
+| Deliverable | Details / Links |
+| :--- | :--- |
+| **GitHub Repository** | *[Insert Submitted GitHub Repository URL]* (Ensure repo visibility is set to **Public**) |
+| **Live Deployed App** | *[Insert Deployed Application URL]* (e.g. Vercel / Render / Netlify) |
+| **Production Build** | Verified and generated in `client/dist/` (`npm run build` / `npm run preview`) |
+| **Video Demonstration** | *[Insert Demo Video URL]* (YouTube / Loom / Google Drive — access set to **"Anyone with link"**) |
+| **Pre-loaded Demo Accounts** | **1-Click Persona Switcher** built directly into the navbar, or manual login (see Section 6) |
+| **Security Audit** | Clean — zero API keys, secrets, or sensitive credentials tracked in Git |
+
+---
+
 ## 1. Product Overview
 
 - **Product Name:** SpaceCraft
@@ -280,3 +293,50 @@ npm run build
 ## 11. Known Limitations & Future Horizons
 - The current 3D viewer is focused on material customization, camera perspectives, and architectural lighting rather than full CAD drag-and-drop geometry placement (an intentional scope decision).
 - Direct file uploads use secure image URLs or Cloudinary when configured in production; local uploads fallback gracefully to URL references.
+
+---
+
+## 12. Deployment Guide (Cloud & Accessible Build)
+
+SpaceCraft is designed for seamless separation of concerns and rapid cloud deployment:
+
+### Option A: Frontend Deployment (Vercel / Netlify)
+1. Set Root Directory to `client`.
+2. Build Command: `npm run build`.
+3. Output Directory: `dist`.
+4. Environment Variables:
+   - `VITE_API_URL`: URL of the deployed backend (e.g. `https://spacecraft-api.onrender.com/api`).
+
+### Option B: Backend Deployment (Render / Railway / Fly.io)
+1. Set Root Directory to `server`.
+2. Build Command: `npm install`.
+3. Start Command: `node src/server.js`.
+4. Environment Variables:
+   - `PORT`: `5001` (or provided dynamically by host)
+   - `MONGODB_URI`: MongoDB Atlas connection string (`mongodb+srv://...`)
+   - `JWT_SECRET`: Random secure string
+   - `CLIENT_URL`: URL of your deployed frontend (to allow CORS)
+   - `NODE_ENV`: `production`
+5. Seed Database on Deploy:
+   Run `npm run seed` once in the deployment console or run `node src/scripts/seed.js` to populate the initial catalog and demo accounts.
+
+### Option C: Local Production Build Preview
+For evaluators running the production build locally:
+```bash
+# Build the production bundle
+npm run build
+
+# Preview the optimized production distribution
+npm run preview
+```
+
+---
+
+## 13. Pre-Submission Quality & Security Checklist
+
+- [x] **Clean Working Tree:** All recent features (multi-room 3D scenes, camera controls, versioning) committed.
+- [x] **Production Build Verified:** `npm run build` builds without errors.
+- [x] **Zero Secrets in Repository:** Real `.env` files are in `.gitignore`. Only `.env.example` with placeholders is tracked.
+- [x] **Automated Tests:** Comprehensive 7-workflow integration test script included (`npm test`).
+- [x] **Documentation Complete:** Architecture diagrams, API catalog, model schemas, and demo script provided.
+- [x] **Pre-seeded Accounts:** 1-Click demo persona switcher eliminates friction for evaluators.
