@@ -1,4 +1,15 @@
-const BASE_URL = import.meta.env.VITE_API_URL || '';
+// Safely resolve and normalize the base API URL:
+// - Removes trailing slash (e.g. 'https://api.onrender.com/' -> 'https://api.onrender.com')
+// - Removes redundant trailing '/api' (e.g. 'https://api.onrender.com/api' -> 'https://api.onrender.com')
+// - Defaults to '' in local development (falling back to Vite proxy / same-origin)
+let rawBase = (import.meta.env.VITE_API_URL || '').trim();
+if (rawBase.endsWith('/')) {
+  rawBase = rawBase.slice(0, -1);
+}
+if (rawBase.endsWith('/api')) {
+  rawBase = rawBase.slice(0, -4);
+}
+const BASE_URL = rawBase;
 
 const getHeaders = (token) => {
   const headers = { 'Content-Type': 'application/json' };

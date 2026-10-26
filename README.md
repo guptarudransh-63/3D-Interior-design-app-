@@ -296,55 +296,54 @@ npm run build
 
 ---
 
-## 12. Deployment Guide (Cloud & Accessible Build)
+## 12. Deployment Guide (Vercel Frontend + Render Backend)
 
-SpaceCraft is completely **Vercel-native** with a unified full-stack monorepo architecture (`vercel.json` + `api/index.js` serverless function + React 18 SPA):
+SpaceCraft is fully configured for a dual-cloud deployment (React + Vite on Vercel, Express + Node on Render, MongoDB Atlas database):
 
-### Option A: Zero-Config Full-Stack Vercel Deployment (Recommended)
-You can deploy both the frontend and backend serverless API together in a single Vercel project:
-
-1. **Push your repository to GitHub.**
-2. Go to [vercel.com](https://vercel.com) and click **"Add New Project"**.
-3. **Import your GitHub repository.**
-4. Leave **Root Directory** as `./` (the repository root). Vercel will automatically read `vercel.json`:
-   - **Framework Preset:** Vite
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `client/dist`
-5. **Add Environment Variables** in the Vercel dashboard:
-   - `MONGODB_URI`: Your MongoDB Atlas connection string (`mongodb+srv://<user>:<password>@cluster0.mongodb.net/spacecraft?retryWrites=true&w=majority`)
-   - `JWT_SECRET`: Any secure random secret (e.g. `spacecraft_production_jwt_key_2026`)
+### 1. Backend Deployment on Render (Web Service)
+1. In the [Render Dashboard](https://dashboard.render.com), click **New +** $\to$ **Web Service**.
+2. Connect your GitHub repository: `guptarudransh-63/3D-Interior-design-app-`.
+3. Configure settings:
+   - **Name:** `spacecraft-backend` (or any unique name)
+   - **Region:** Closest to your MongoDB Atlas cluster (e.g. Frankfurt, Oregon, Singapore)
+   - **Branch:** `main`
+   - **Root Directory:** `server` *(or leave blank / `./` — both root and server package.json contain the start script)*
+   - **Runtime:** `Node`
+   - **Build Command:** `npm install`
+   - **Start Command:** `node src/server.js` *(or `npm start`)*
+4. Configure **Environment Variables** in Render:
+   - `PORT`: `5001` *(Render dynamically provides its own PORT; this fallback is safe)*
    - `NODE_ENV`: `production`
-6. Click **Deploy**!
-   - Vercel automatically serves the React SPA frontend from `client/dist`.
-   - Vercel routes `/api/*` requests to the Express serverless function in `api/index.js`.
-   - Single-domain deployment means **zero CORS issues**.
-7. **Seed Data to MongoDB Atlas:**
-   To populate demo concepts, materials, and evaluator accounts into your MongoDB Atlas database, run once from your local terminal:
-   ```bash
-   MONGODB_URI="<your-mongodb-atlas-uri>" npm run seed
-   ```
+   - `MONGODB_URI`: `mongodb+srv://<username>:<password>@cluster0.mongodb.net/spacecraft?retryWrites=true&w=majority`
+   - `JWT_SECRET`: A long secure secret key (e.g. `spacecraft_production_jwt_key_2026`)
+   - `CLIENT_URL`: `https://<your-vercel-app>.vercel.app,http://localhost:5173` *(All `*.vercel.app` domains are also automatically allowed by CORS)*
+5. Click **Create Web Service**.
+   - Render will build and start the service.
+   - You can verify backend health at: `https://<your-backend-name>.onrender.com/api/health`.
 
-### Option B: Two-Project Deployment (Frontend on Vercel + Backend on Render/Railway)
-If you prefer running a persistent long-running Express server:
-1. **Frontend (Vercel):**
-   - Root directory: `client`
-   - Framework: Vite
-   - Build command: `npm run build`
-   - Output directory: `dist`
-   - Environment Variable: `VITE_API_URL=https://<your-backend>.onrender.com`
-2. **Backend (Render / Railway):**
-   - Root directory: `server`
-   - Start command: `node src/server.js`
-   - Environment Variables: `MONGODB_URI`, `JWT_SECRET`, `CLIENT_URL=https://<your-frontend>.vercel.app`
+### 2. Frontend Deployment on Vercel
+1. In the [Vercel Dashboard](https://vercel.com), click **Add New...** $\to$ **Project**.
+2. Import your GitHub repository: `guptarudransh-63/3D-Interior-design-app-`.
+3. Configure settings:
+   - **Framework Preset:** `Vite`
+   - **Root Directory:** `client` *(Click "Edit" and choose `client`)*
+   - **Build Command:** `npm run build` *(runs `vite build`)*
+   - **Output Directory:** `dist`
+4. Configure **Environment Variables** in Vercel:
+   - `VITE_API_URL`: `https://<your-backend-name>.onrender.com` *(Your live Render backend URL)*
+5. Click **Deploy**.
+   - Vercel installs all dependencies (including Vite) and builds the production bundle cleanly.
+   - Client-side routing is handled without 404s via `client/vercel.json`.
 
-### Option C: Local Production Build Preview
-For evaluators running the production build locally:
+### 3. Alternative: Zero-Config Monorepo on Vercel
+If you also want a backup full-stack serverless deployment on Vercel alone:
+- **Root Directory:** `./`
+- Vercel runs `api/index.js` as an edge serverless API and `client/dist` as the frontend.
+
+### 4. Database Seeding (MongoDB Atlas)
+To populate the 6 3D room concepts, 16 physical materials, and pre-seeded evaluator demo accounts (`Client`, `Designer`, `Admin`) into your MongoDB Atlas cluster, run this command once from your local terminal:
 ```bash
-# Build the production bundle
-npm run build
-
-# Preview the optimized production distribution
-npm run preview
+MONGODB_URI="<your-mongodb-atlas-uri>" npm run seed
 ```
 
 ---

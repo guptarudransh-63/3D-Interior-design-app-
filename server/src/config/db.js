@@ -15,7 +15,6 @@ export const connectDB = async () => {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false,
       serverSelectionTimeoutMS: 5000,
     };
 
@@ -31,9 +30,6 @@ export const connectDB = async () => {
   } catch (error) {
     cached.promise = null;
     console.error(`[MongoDB Connection Error]: ${error.message}`);
-    if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-      process.exit(1);
-    }
     throw error;
   }
 };

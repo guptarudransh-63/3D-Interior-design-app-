@@ -19,22 +19,42 @@ dotenv.config();
 const app = express();
 
 // Middleware
-const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
+const configuredOrigins = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((url) => url.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+const defaultLocalOrigins = [
+  'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
+  'http://127.0.0.1:3000',
 ];
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // Server-to-server, curl, mobile, health checks
+  if (configuredOrigins.includes(origin)) return true;
+  if (defaultLocalOrigins.includes(origin)) return true;
+  // Automatically allow any Vercel production or preview deployment URL
+  if (/^https:\/\/([a-zA-Z0-9_-]+\.)*vercel\.app$/.test(origin)) return true;
+  // Permissive fallback in non-production
+  if (process.env.NODE_ENV !== 'production') return true;
+  return false;
+};
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
-        callback(null, true); // Permissive for local dev / demo deployment
+        console.warn(`[CORS Blocked]: Origin ${origin} not in allowed list.`);
+        callback(new Error(`CORS policy does not allow access from origin: ${origin}`));
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
