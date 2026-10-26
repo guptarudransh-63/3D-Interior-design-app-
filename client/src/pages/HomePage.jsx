@@ -19,6 +19,7 @@ export const HomePage = () => {
   const [featuredConcepts, setFeaturedConcepts] = useState([]);
   const [heroMaterials, setHeroMaterials] = useState({});
   const [materialsList, setMaterialsList] = useState([]);
+  const [heroActiveRoomType, setHeroActiveRoomType] = useState('Living Room');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -165,21 +166,44 @@ export const HomePage = () => {
           {/* Right 3D Showcase Preview */}
           <div className="lg:col-span-7">
             <div className="relative">
-              <RoomCanvas
-                selectedMaterials={heroMaterials}
-                roomConcept={featuredConcepts[0]}
-                fallbackImage="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=80"
-              />
-              <div className="mt-3 flex items-center justify-between text-xs text-charcoal-700 px-1">
-                <span>Interactive Concept: Aura Minimalist Salon</span>
-                <Link
-                  to={featuredConcepts[0] ? `/concept/${featuredConcepts[0].slug}` : '/catalog'}
-                  className="text-terracotta hover:underline font-medium inline-flex items-center space-x-1"
-                >
-                  <span>Open Full Customizer Studio</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+              {(() => {
+                const activeConcept =
+                  featuredConcepts.find((c) =>
+                    c.roomType.toLowerCase().includes(heroActiveRoomType.toLowerCase())
+                  ) || featuredConcepts[0];
+
+                return (
+                  <>
+                    <RoomCanvas
+                      selectedMaterials={heroMaterials}
+                      roomConcept={activeConcept}
+                      roomType={heroActiveRoomType}
+                      onRoomTypeChange={(newType) => {
+                        setHeroActiveRoomType(newType);
+                        const matching = featuredConcepts.find((c) =>
+                          c.roomType.toLowerCase().includes(newType.toLowerCase())
+                        );
+                        if (matching?.defaultSelections) {
+                          setHeroMaterials(matching.defaultSelections);
+                        }
+                      }}
+                      fallbackImage={activeConcept?.coverImage || 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=80'}
+                    />
+                    <div className="mt-3 flex items-center justify-between text-xs text-charcoal-700 px-1">
+                      <span>
+                        Interactive 3D Area: <strong>{heroActiveRoomType}</strong> {activeConcept ? `(${activeConcept.name})` : ''}
+                      </span>
+                      <Link
+                        to={activeConcept ? `/concept/${activeConcept.slug}` : '/catalog'}
+                        className="text-terracotta hover:underline font-medium inline-flex items-center space-x-1"
+                      >
+                        <span>Open Full Studio Customizer</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
