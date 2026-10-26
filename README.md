@@ -8,7 +8,7 @@
 
 | Deliverable | Details / Links |
 | :--- | :--- |
-| **GitHub Repository** | *[Insert Submitted GitHub Repository URL]* (Ensure repo visibility is set to **Public**) |
+| **GitHub Repository** | [https://github.com/guptarudransh-63/3D-Interior-design-app-](https://github.com/guptarudransh-63/3D-Interior-design-app-) (Public) |
 | **Live Deployed App** | *[Insert Deployed Application URL]* (e.g. Vercel / Render / Netlify) |
 | **Production Build** | Verified and generated in `client/dist/` (`npm run build` / `npm run preview`) |
 | **Video Demonstration** | *[Insert Demo Video URL]* (YouTube / Loom / Google Drive — access set to **"Anyone with link"**) |
@@ -298,27 +298,44 @@ npm run build
 
 ## 12. Deployment Guide (Cloud & Accessible Build)
 
-SpaceCraft is designed for seamless separation of concerns and rapid cloud deployment:
+SpaceCraft is completely **Vercel-native** with a unified full-stack monorepo architecture (`vercel.json` + `api/index.js` serverless function + React 18 SPA):
 
-### Option A: Frontend Deployment (Vercel / Netlify)
-1. Set Root Directory to `client`.
-2. Build Command: `npm run build`.
-3. Output Directory: `dist`.
-4. Environment Variables:
-   - `VITE_API_URL`: URL of the deployed backend (e.g. `https://spacecraft-api.onrender.com/api`).
+### Option A: Zero-Config Full-Stack Vercel Deployment (Recommended)
+You can deploy both the frontend and backend serverless API together in a single Vercel project:
 
-### Option B: Backend Deployment (Render / Railway / Fly.io)
-1. Set Root Directory to `server`.
-2. Build Command: `npm install`.
-3. Start Command: `node src/server.js`.
-4. Environment Variables:
-   - `PORT`: `5001` (or provided dynamically by host)
-   - `MONGODB_URI`: MongoDB Atlas connection string (`mongodb+srv://...`)
-   - `JWT_SECRET`: Random secure string
-   - `CLIENT_URL`: URL of your deployed frontend (to allow CORS)
+1. **Push your repository to GitHub.**
+2. Go to [vercel.com](https://vercel.com) and click **"Add New Project"**.
+3. **Import your GitHub repository.**
+4. Leave **Root Directory** as `./` (the repository root). Vercel will automatically read `vercel.json`:
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `client/dist`
+5. **Add Environment Variables** in the Vercel dashboard:
+   - `MONGODB_URI`: Your MongoDB Atlas connection string (`mongodb+srv://<user>:<password>@cluster0.mongodb.net/spacecraft?retryWrites=true&w=majority`)
+   - `JWT_SECRET`: Any secure random secret (e.g. `spacecraft_production_jwt_key_2026`)
    - `NODE_ENV`: `production`
-5. Seed Database on Deploy:
-   Run `npm run seed` once in the deployment console or run `node src/scripts/seed.js` to populate the initial catalog and demo accounts.
+6. Click **Deploy**!
+   - Vercel automatically serves the React SPA frontend from `client/dist`.
+   - Vercel routes `/api/*` requests to the Express serverless function in `api/index.js`.
+   - Single-domain deployment means **zero CORS issues**.
+7. **Seed Data to MongoDB Atlas:**
+   To populate demo concepts, materials, and evaluator accounts into your MongoDB Atlas database, run once from your local terminal:
+   ```bash
+   MONGODB_URI="<your-mongodb-atlas-uri>" npm run seed
+   ```
+
+### Option B: Two-Project Deployment (Frontend on Vercel + Backend on Render/Railway)
+If you prefer running a persistent long-running Express server:
+1. **Frontend (Vercel):**
+   - Root directory: `client`
+   - Framework: Vite
+   - Build command: `npm run build`
+   - Output directory: `dist`
+   - Environment Variable: `VITE_API_URL=https://<your-backend>.onrender.com`
+2. **Backend (Render / Railway):**
+   - Root directory: `server`
+   - Start command: `node src/server.js`
+   - Environment Variables: `MONGODB_URI`, `JWT_SECRET`, `CLIENT_URL=https://<your-frontend>.vercel.app`
 
 ### Option C: Local Production Build Preview
 For evaluators running the production build locally:

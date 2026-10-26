@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Route imports
@@ -46,11 +47,14 @@ if (process.env.NODE_ENV !== 'test') {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const dbStates = ['disconnected', 'connected', 'connecting', 'disconnecting'];
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'SpaceCraft API',
     version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    database: dbStates[mongoose.connection.readyState] || 'disconnected',
   });
 });
 
