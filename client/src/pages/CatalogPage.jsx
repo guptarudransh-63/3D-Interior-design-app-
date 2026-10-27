@@ -18,6 +18,27 @@ export const CatalogPage = () => {
   const [selectedStyle, setSelectedStyle] = useState(searchParams.get('designStyle') || 'All');
   const [sortBy, setSortBy] = useState('newest');
 
+  // Synchronize filter states whenever URL searchParams change (from Footer, Navbar, Home, or browser back/forward)
+  useEffect(() => {
+    const rawType = (searchParams.get('roomType') || 'All').trim();
+    const rawStyle = (searchParams.get('designStyle') || 'All').trim();
+    const rawSearch = (searchParams.get('search') || '').trim();
+
+    // Map case-insensitively to registered canonical ROOM_TYPES
+    const matchedType = ROOM_TYPES.find(
+      (t) => t.toLowerCase() === rawType.toLowerCase()
+    ) || (rawType === 'All' ? 'All' : rawType);
+
+    // Map case-insensitively to registered canonical DESIGN_STYLES
+    const matchedStyle = DESIGN_STYLES.find(
+      (s) => s.toLowerCase() === rawStyle.toLowerCase()
+    ) || (rawStyle === 'All' ? 'All' : rawStyle);
+
+    setSelectedRoomType(matchedType);
+    setSelectedStyle(matchedStyle);
+    setSearch(rawSearch);
+  }, [searchParams]);
+
   const fetchConcepts = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
@@ -49,12 +70,13 @@ export const CatalogPage = () => {
 
   const handleRoomTypeChange = (type) => {
     setSelectedRoomType(type);
+    const newParams = new URLSearchParams(searchParams);
     if (type === 'All') {
-      searchParams.delete('roomType');
+      newParams.delete('roomType');
     } else {
-      searchParams.set('roomType', type);
+      newParams.set('roomType', type);
     }
-    setSearchParams(searchParams);
+    setSearchParams(newParams);
   };
 
   return (
@@ -175,8 +197,9 @@ export const CatalogPage = () => {
               setSearch('');
               setSelectedRoomType('All');
               setSelectedStyle('All');
+              setSearchParams({});
             }}
-            className="mt-4 px-4 py-2 bg-charcoal-900 text-ivory-100 rounded-sm text-xs font-medium"
+            className="mt-4 px-4 py-2 bg-charcoal-900 text-ivory-100 rounded-sm text-xs font-medium hover:bg-charcoal-800 transition-colors"
           >
             Reset Filters
           </button>

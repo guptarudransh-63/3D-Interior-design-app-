@@ -8,14 +8,14 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           {/* Brand Col */}
           <div className="md:col-span-1 space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-sm bg-terracotta text-ivory-100 flex items-center justify-center">
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="w-8 h-8 rounded-sm bg-terracotta text-ivory-100 flex items-center justify-center transition-transform group-hover:scale-95 shadow-xs">
                 <span className="font-editorial text-lg font-bold">SC</span>
               </div>
-              <span className="font-editorial text-2xl font-semibold tracking-tight text-ivory-100">
+              <span className="font-editorial text-2xl font-semibold tracking-tight text-ivory-100 group-hover:text-stone-warm transition-colors">
                 SpaceCraft
               </span>
-            </div>
+            </Link>
             <p className="text-xs text-stone-warm/60 leading-relaxed">
               An architectural interior design platform uniting 3D spatial exploration, physical material customization, and versioned designer proposals.
             </p>
@@ -30,11 +30,12 @@ export const Footer = () => {
               Explore Rooms
             </h4>
             <ul className="space-y-2.5 text-xs">
-              <li><Link to="/catalog?roomType=Living+Room" className="hover:text-ivory-100 transition-colors">Living Salons</Link></li>
+              <li><Link to="/catalog?roomType=Living%20Room" className="hover:text-ivory-100 transition-colors">Living Salons</Link></li>
               <li><Link to="/catalog?roomType=Bedroom" className="hover:text-ivory-100 transition-colors">Bedrooms & Suites</Link></li>
               <li><Link to="/catalog?roomType=Kitchen" className="hover:text-ivory-100 transition-colors">Architectural Kitchens</Link></li>
-              <li><Link to="/catalog?roomType=Home+Office" className="hover:text-ivory-100 transition-colors">Executive Studies</Link></li>
-              <li><Link to="/catalog?roomType=Dining+Room" className="hover:text-ivory-100 transition-colors">Dining Terraces</Link></li>
+              <li><Link to="/catalog?roomType=Home%20Office" className="hover:text-ivory-100 transition-colors">Executive Studies</Link></li>
+              <li><Link to="/catalog?roomType=Dining%20Room" className="hover:text-ivory-100 transition-colors">Dining Terraces</Link></li>
+              <li><Link to="/catalog?roomType=Studio%20Apartment" className="hover:text-ivory-100 transition-colors">Lofts & Studios</Link></li>
             </ul>
           </div>
 
