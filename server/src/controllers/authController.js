@@ -13,10 +13,14 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 export const register = async (req, res, next) => {
+  const sanitizedEmail = req.body?.email ? String(req.body.email).toLowerCase().trim() : '';
+  console.log(`[Auth Register]: Attempting registration for email: ${sanitizedEmail || 'missing'}, role: ${req.body?.role || 'client'}`);
+
   try {
     const { name, email, password, role, phone } = req.body;
 
     if (!name || !email || !password) {
+      console.warn(`[Auth Register Warning]: Missing required fields for email: ${sanitizedEmail || 'unknown'}`);
       return res.status(400).json({
         success: false,
         message: 'Please provide name, email, and password',
@@ -24,14 +28,16 @@ export const register = async (req, res, next) => {
     }
 
     if (password.length < 6) {
+      console.warn(`[Auth Register Warning]: Password too short for email: ${sanitizedEmail}`);
       return res.status(400).json({
         success: false,
         message: 'Password must be at least 6 characters long',
       });
     }
 
-    const userExists = await User.findOne({ email: email.toLowerCase() });
+    const userExists = await User.findOne({ email: sanitizedEmail });
     if (userExists) {
+      console.warn(`[Auth Register Warning]: Duplicate email attempt: ${sanitizedEmail}`);
       return res.status(400).json({
         success: false,
         message: 'An account with this email address already exists',
@@ -42,14 +48,16 @@ export const register = async (req, res, next) => {
     const assignedRole = role === 'designer' ? 'designer' : 'client';
 
     const user = await User.create({
-      name,
-      email: email.toLowerCase(),
+      name: String(name).trim(),
+      email: sanitizedEmail,
       password,
       role: assignedRole,
-      phone: phone || '',
+      phone: phone ? String(phone).trim() : '',
     });
 
     const token = generateToken(user._id);
+
+    console.log(`[Auth Register Success]: Created user ID: ${user._id}, email: ${user.email}, role: ${user.role}`);
 
     res.status(201).json({
       success: true,
@@ -65,6 +73,7 @@ export const register = async (req, res, next) => {
       },
     });
   } catch (error) {
+    console.error(`[Auth Register Error]: Failed for email: ${sanitizedEmail || 'unknown'}: ${error.message}`);
     next(error);
   }
 };
@@ -73,6 +82,9 @@ export const register = async (req, res, next) => {
 // @route   POST /api/auth/login
 // @access  Public
 export const login = async (req, res, next) => {
+  const sanitizedEmail = req.body?.email ? String(req.body.email).toLowerCase().trim() : '';
+  console.log(`[Auth Login]: Login attempt for email: ${sanitizedEmail || 'missing'}`);
+
   try {
     const { email, password } = req.body;
 
@@ -83,9 +95,10 @@ export const login = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    const user = await User.findOne({ email: sanitizedEmail }).select('+password');
 
     if (!user || !(await user.matchPassword(password))) {
+      console.warn(`[Auth Login Warning]: Invalid credentials for email: ${sanitizedEmail}`);
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password',
@@ -93,6 +106,7 @@ export const login = async (req, res, next) => {
     }
 
     if (user.status !== 'active') {
+      console.warn(`[Auth Login Warning]: Inactive account login attempt: ${sanitizedEmail}`);
       return res.status(403).json({
         success: false,
         message: 'Account is deactivated. Please contact support.',
@@ -100,6 +114,7 @@ export const login = async (req, res, next) => {
     }
 
     const token = generateToken(user._id);
+    console.log(`[Auth Login Success]: Authenticated user ID: ${user._id}, email: ${user.email}, role: ${user.role}`);
 
     res.json({
       success: true,
@@ -115,6 +130,7 @@ export const login = async (req, res, next) => {
       },
     });
   } catch (error) {
+    console.error(`[Auth Login Error]: Failed for email: ${sanitizedEmail || 'unknown'}: ${error.message}`);
     next(error);
   }
 };

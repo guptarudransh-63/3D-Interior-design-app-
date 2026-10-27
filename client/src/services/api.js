@@ -20,6 +20,30 @@ const getHeaders = (token) => {
   return headers;
 };
 
+const safeFetch = async (url, options = {}) => {
+  try {
+    return await fetch(url, options);
+  } catch (err) {
+    if (
+      err.name === 'TypeError' ||
+      err.message?.includes('fetch') ||
+      err.message?.includes('NetworkError')
+    ) {
+      let targetHost = url;
+      try {
+        targetHost = url.startsWith('http') ? new URL(url).origin : window.location.origin;
+      } catch (e) {
+        // ignore
+      }
+      console.error(`[API Network Failure]: Failed to reach ${url}:`, err);
+      throw new Error(
+        `Network connection failed to ${targetHost}. Please ensure your Vercel VITE_API_URL points to your active Render URL (https://threed-interior-design-app.onrender.com) and the backend is live.`
+      );
+    }
+    throw err;
+  }
+};
+
 const handleResponse = async (res) => {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -32,7 +56,7 @@ const handleResponse = async (res) => {
 export const api = {
   // Auth
   login: async (email, password) => {
-    const res = await fetch(`${BASE_URL}/api/auth/login`, {
+    const res = await safeFetch(`${BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -41,7 +65,7 @@ export const api = {
   },
 
   register: async (userData) => {
-    const res = await fetch(`${BASE_URL}/api/auth/register`, {
+    const res = await safeFetch(`${BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
@@ -50,7 +74,7 @@ export const api = {
   },
 
   getMe: async () => {
-    const res = await fetch(`${BASE_URL}/api/auth/me`, {
+    const res = await safeFetch(`${BASE_URL}/api/auth/me`, {
       headers: getHeaders(),
     });
     return handleResponse(res);
@@ -59,21 +83,21 @@ export const api = {
   // Room Concepts
   getRoomConcepts: async (params = {}) => {
     const query = new URLSearchParams(params).toString();
-    const res = await fetch(`${BASE_URL}/api/room-concepts${query ? `?${query}` : ''}`, {
+    const res = await safeFetch(`${BASE_URL}/api/room-concepts${query ? `?${query}` : ''}`, {
       headers: getHeaders(),
     });
     return handleResponse(res);
   },
 
   getRoomConceptBySlug: async (slug) => {
-    const res = await fetch(`${BASE_URL}/api/room-concepts/${slug}`, {
+    const res = await safeFetch(`${BASE_URL}/api/room-concepts/${slug}`, {
       headers: getHeaders(),
     });
     return handleResponse(res);
   },
 
   createRoomConcept: async (conceptData) => {
-    const res = await fetch(`${BASE_URL}/api/room-concepts`, {
+    const res = await safeFetch(`${BASE_URL}/api/room-concepts`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(conceptData),
@@ -82,7 +106,7 @@ export const api = {
   },
 
   updateRoomConcept: async (id, conceptData) => {
-    const res = await fetch(`${BASE_URL}/api/room-concepts/${id}`, {
+    const res = await safeFetch(`${BASE_URL}/api/room-concepts/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(conceptData),
@@ -91,7 +115,7 @@ export const api = {
   },
 
   deleteRoomConcept: async (id) => {
-    const res = await fetch(`${BASE_URL}/api/room-concepts/${id}`, {
+    const res = await safeFetch(`${BASE_URL}/api/room-concepts/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
@@ -101,27 +125,27 @@ export const api = {
   // Materials
   getMaterialOptions: async (category = '') => {
     const url = `${BASE_URL}/api/material-options${category ? `?category=${category}` : ''}`;
-    const res = await fetch(url, { headers: getHeaders() });
+    const res = await safeFetch(url, { headers: getHeaders() });
     return handleResponse(res);
   },
 
   // Saved Designs
   getSavedDesigns: async () => {
-    const res = await fetch(`${BASE_URL}/api/designs`, {
+    const res = await safeFetch(`${BASE_URL}/api/designs`, {
       headers: getHeaders(),
     });
     return handleResponse(res);
   },
 
   getSavedDesignById: async (id) => {
-    const res = await fetch(`${BASE_URL}/api/designs/${id}`, {
+    const res = await safeFetch(`${BASE_URL}/api/designs/${id}`, {
       headers: getHeaders(),
     });
     return handleResponse(res);
   },
 
   createSavedDesign: async (designData) => {
-    const res = await fetch(`${BASE_URL}/api/designs`, {
+    const res = await safeFetch(`${BASE_URL}/api/designs`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(designData),
@@ -130,7 +154,7 @@ export const api = {
   },
 
   updateSavedDesign: async (id, designData) => {
-    const res = await fetch(`${BASE_URL}/api/designs/${id}`, {
+    const res = await safeFetch(`${BASE_URL}/api/designs/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(designData),
@@ -139,7 +163,7 @@ export const api = {
   },
 
   duplicateSavedDesign: async (id) => {
-    const res = await fetch(`${BASE_URL}/api/designs/${id}/duplicate`, {
+    const res = await safeFetch(`${BASE_URL}/api/designs/${id}/duplicate`, {
       method: 'POST',
       headers: getHeaders(),
     });
@@ -147,7 +171,7 @@ export const api = {
   },
 
   deleteSavedDesign: async (id) => {
-    const res = await fetch(`${BASE_URL}/api/designs/${id}`, {
+    const res = await safeFetch(`${BASE_URL}/api/designs/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
@@ -156,7 +180,7 @@ export const api = {
 
   // Projects
   createProject: async (projectData) => {
-    const res = await fetch(`${BASE_URL}/api/projects`, {
+    const res = await safeFetch(`${BASE_URL}/api/projects`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(projectData),
@@ -166,21 +190,21 @@ export const api = {
 
   getProjects: async (params = {}) => {
     const query = new URLSearchParams(params).toString();
-    const res = await fetch(`${BASE_URL}/api/projects${query ? `?${query}` : ''}`, {
+    const res = await safeFetch(`${BASE_URL}/api/projects${query ? `?${query}` : ''}`, {
       headers: getHeaders(),
     });
     return handleResponse(res);
   },
 
   getProjectById: async (id) => {
-    const res = await fetch(`${BASE_URL}/api/projects/${id}`, {
+    const res = await safeFetch(`${BASE_URL}/api/projects/${id}`, {
       headers: getHeaders(),
     });
     return handleResponse(res);
   },
 
   updateProjectStatus: async (id, nextStatus, notes = '') => {
-    const res = await fetch(`${BASE_URL}/api/projects/${id}/status`, {
+    const res = await safeFetch(`${BASE_URL}/api/projects/${id}/status`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify({ nextStatus, notes }),
@@ -189,7 +213,7 @@ export const api = {
   },
 
   assignDesigner: async (id, designerId) => {
-    const res = await fetch(`${BASE_URL}/api/projects/${id}/assign`, {
+    const res = await safeFetch(`${BASE_URL}/api/projects/${id}/assign`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify({ designerId }),
@@ -199,7 +223,7 @@ export const api = {
 
   // Proposals & Sequential Versions
   createInitialProposal: async (projectId, proposalData) => {
-    const res = await fetch(`${BASE_URL}/api/projects/${projectId}/proposals`, {
+    const res = await safeFetch(`${BASE_URL}/api/projects/${projectId}/proposals`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(proposalData),
@@ -208,14 +232,14 @@ export const api = {
   },
 
   getProposalVersions: async (proposalId) => {
-    const res = await fetch(`${BASE_URL}/api/proposals/${proposalId}/versions`, {
+    const res = await safeFetch(`${BASE_URL}/api/proposals/${proposalId}/versions`, {
       headers: getHeaders(),
     });
     return handleResponse(res);
   },
 
   createProposalRevision: async (proposalId, revisionData) => {
-    const res = await fetch(`${BASE_URL}/api/proposals/${proposalId}/versions`, {
+    const res = await safeFetch(`${BASE_URL}/api/proposals/${proposalId}/versions`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(revisionData),
@@ -224,7 +248,7 @@ export const api = {
   },
 
   submitRevisionRequest: async (proposalId, versionId, requestData) => {
-    const res = await fetch(
+    const res = await safeFetch(
       `${BASE_URL}/api/proposals/${proposalId}/versions/${versionId}/revision-requests`,
       {
         method: 'POST',
@@ -236,7 +260,7 @@ export const api = {
   },
 
   acceptProposalVersion: async (proposalId, versionId, notes = '') => {
-    const res = await fetch(
+    const res = await safeFetch(
       `${BASE_URL}/api/proposals/${proposalId}/versions/${versionId}/accept`,
       {
         method: 'POST',
@@ -248,7 +272,7 @@ export const api = {
   },
 
   declineProposalVersion: async (proposalId, versionId, reason = '') => {
-    const res = await fetch(
+    const res = await safeFetch(
       `${BASE_URL}/api/proposals/${proposalId}/versions/${versionId}/decline`,
       {
         method: 'POST',
@@ -261,21 +285,21 @@ export const api = {
 
   // Admin
   getAdminMetrics: async () => {
-    const res = await fetch(`${BASE_URL}/api/admin/dashboard`, {
+    const res = await safeFetch(`${BASE_URL}/api/admin/dashboard`, {
       headers: getHeaders(),
     });
     return handleResponse(res);
   },
 
   getAdminUsers: async () => {
-    const res = await fetch(`${BASE_URL}/api/admin/users`, {
+    const res = await safeFetch(`${BASE_URL}/api/admin/users`, {
       headers: getHeaders(),
     });
     return handleResponse(res);
   },
 
   updateAdminUser: async (userId, data) => {
-    const res = await fetch(`${BASE_URL}/api/admin/users/${userId}`, {
+    const res = await safeFetch(`${BASE_URL}/api/admin/users/${userId}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(data),

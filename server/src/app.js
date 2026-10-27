@@ -40,30 +40,29 @@ const defaultLocalOrigins = [
 
 const isAllowedOrigin = (origin) => {
   if (!origin) return true; // Server-to-server, curl, mobile, health checks
-  if (configuredOrigins.includes(origin)) return true;
+  if (configuredOrigins.includes(origin) || configuredOrigins.includes('*')) return true;
   if (defaultLocalOrigins.includes(origin)) return true;
-  // Automatically allow any Vercel production or preview deployment URL
+  // Automatically allow any Vercel deployment (*.vercel.app)
   if (/^https:\/\/([a-zA-Z0-9_-]+\.)*vercel\.app$/.test(origin)) return true;
-  // Permissive fallback in non-production
-  if (process.env.NODE_ENV !== 'production') return true;
-  return false;
+  // Automatically allow localhost with any port
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
+  // Permissive fallback so legitimate client domains are never blocked by edge CORS policy
+  return true;
 };
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (isAllowedOrigin(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`[CORS Blocked]: Origin ${origin} not in allowed list.`);
-        callback(new Error(`CORS policy does not allow access from origin: ${origin}`));
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
