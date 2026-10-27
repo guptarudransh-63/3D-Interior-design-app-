@@ -30,11 +30,11 @@ const attemptDBConnection = async () => {
     await connectDB();
     console.log('[Database Status]: MongoDB connection established and ready for requests.');
 
-    // Ensure catalog data is present (safe & idempotent)
+    // Ensure catalog data and demo personas are present (safe & idempotent)
     try {
       const totalConcepts = await RoomConcept.countDocuments();
-      if (totalConcepts === 0) {
-        console.log('[Database Notice]: Empty room concept catalog detected. Seeding initial concepts & materials...');
+      if (totalConcepts < 12) {
+        console.log(`[Database Notice]: Curating full 12 architectural room concepts & demo data (current count: ${totalConcepts})...`);
         await safeSeedCatalog();
       }
     } catch (seedErr) {

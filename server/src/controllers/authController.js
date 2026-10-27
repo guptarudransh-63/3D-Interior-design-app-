@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
+import { safeSeedCatalog } from '../services/catalogSeeder.js';
 
 const generateToken = (id) => {
   return jwt.sign(
@@ -95,7 +96,17 @@ export const login = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ email: sanitizedEmail }).select('+password');
+    let user = await User.findOne({ email: sanitizedEmail }).select('+password');
+
+    // Self-healing for 1-click evaluation personas: ensure demo personas exist if requested
+    if (!user && sanitizedEmail.endsWith('@spacecraft.com')) {
+      try {
+        await safeSeedCatalog();
+        user = await User.findOne({ email: sanitizedEmail }).select('+password');
+      } catch (seedErr) {
+        console.warn(`[Auth Login Seed Notice]: ${seedErr.message}`);
+      }
+    }
 
     if (!user || !(await user.matchPassword(password))) {
       console.warn(`[Auth Login Warning]: Invalid credentials for email: ${sanitizedEmail}`);

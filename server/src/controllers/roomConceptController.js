@@ -8,9 +8,9 @@ export const getRoomConcepts = async (req, res, next) => {
   try {
     const { roomType, designStyle, search, featured, sort, limit = 20, page = 1 } = req.query;
 
-    // Self-healing: if the catalog is completely empty, populate default curated room concepts
+    // Self-healing: if the catalog has fewer than 12 room concepts, populate default curated room concepts
     const currentConceptCount = await RoomConcept.countDocuments();
-    if (currentConceptCount === 0) {
+    if (currentConceptCount < 12) {
       try {
         await safeSeedCatalog();
       } catch (seedErr) {

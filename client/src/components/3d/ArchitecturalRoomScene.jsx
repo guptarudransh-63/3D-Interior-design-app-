@@ -5,6 +5,7 @@ import { BedroomScene3D } from './rooms/BedroomScene3D';
 import { KitchenScene3D } from './rooms/KitchenScene3D';
 import { DiningRoomScene3D } from './rooms/DiningRoomScene3D';
 import { HomeOfficeScene3D } from './rooms/HomeOfficeScene3D';
+import { StudioApartmentScene3D } from './rooms/StudioApartmentScene3D';
 
 export const ArchitecturalRoomScene = ({
   selectedMaterials = {},
@@ -14,11 +15,12 @@ export const ArchitecturalRoomScene = ({
   // Normalize roomType for accurate scene dispatch
   const normalizedRoomType = useMemo(() => {
     const t = (roomType || '').toLowerCase();
+    if (t.includes('studio') || t.includes('apartment') || t.includes('loft')) return 'studio';
     if (t.includes('bed')) return 'bedroom';
     if (t.includes('kitch')) return 'kitchen';
     if (t.includes('din')) return 'dining';
     if (t.includes('office') || t.includes('study')) return 'office';
-    return 'living'; // default to living room / hall / salon / studio
+    return 'living'; // default to living room / hall / salon
   }, [roomType]);
 
   // Material parameter resolvers based on selectedMaterials or fallback defaults
@@ -90,6 +92,15 @@ export const ArchitecturalRoomScene = ({
 
       {normalizedRoomType === 'office' && (
         <HomeOfficeScene3D
+          floorConfig={floorConfig}
+          wallConfig={wallConfig}
+          cabinetryConfig={cabinetryConfig}
+          accentConfig={accentConfig}
+        />
+      )}
+
+      {normalizedRoomType === 'studio' && (
+        <StudioApartmentScene3D
           floorConfig={floorConfig}
           wallConfig={wallConfig}
           cabinetryConfig={cabinetryConfig}
