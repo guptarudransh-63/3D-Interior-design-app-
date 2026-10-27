@@ -6,12 +6,65 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
+/**
+ * Returns the resolved MongoDB connection URI or throws in production if missing.
+ * Prevents silent fallback to 127.0.0.1 in production environments like Render.
+ */
+export const getMongoUri = () => {
+  const envUri =
+    process.env.MONGODB_URI ||
+    process.env.MONGO_URI ||
+    process.env.DATABASE_URL;
+
+  if (envUri && envUri.trim()) {
+    return envUri.trim();
+  }
+
+  const isProduction =
+    process.env.NODE_ENV === 'production' ||
+    Boolean(process.env.RENDER) ||
+    Boolean(process.env.VERCEL);
+
+  if (isProduction) {
+    const errorMsg =
+      '[MongoDB Configuration Error]: MONGODB_URI environment variable is missing in production! ' +
+      'Please add MONGODB_URI in your Render Dashboard (Environment tab) with your MongoDB Atlas connection string ' +
+      '(e.g., mongodb+srv://<username>:<password>@cluster0.mongodb.net/spacecraft?retryWrites=true&w=majority). ' +
+      'Silently falling back to localhost (127.0.0.1:27017) is blocked in production.';
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  // Local development fallback only
+  const localFallback = 'mongodb://127.0.0.1:27017/spacecraft';
+  console.log(
+    `[MongoDB Notice]: MONGODB_URI not set. Using local development fallback: ${localFallback}`
+  );
+  return localFallback;
+};
+
+/**
+ * Connects to MongoDB with connection reuse, server selection timeout, and event logging.
+ */
 export const connectDB = async () => {
   if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
-  const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/spacecraft';
+  const mongoUri = getMongoUri();
+
+  // Attach lifecycle event handlers once
+  if (!mongoose.connection.listeners('disconnected').length) {
+    mongoose.connection.on('disconnected', () => {
+      console.warn('[MongoDB Disconnected]: Lost connection to database.');
+      cached.conn = null;
+      cached.promise = null;
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('[MongoDB Reconnected]: Database connection re-established.');
+    });
+  }
 
   if (!cached.promise) {
     const opts = {
@@ -19,6 +72,7 @@ export const connectDB = async () => {
     };
 
     cached.promise = mongoose.connect(mongoUri, opts).then((mongooseInstance) => {
+      // Log host safely without exposing username/password
       console.log(`[MongoDB Connected]: ${mongooseInstance.connection.host}`);
       return mongooseInstance;
     });

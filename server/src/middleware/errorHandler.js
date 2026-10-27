@@ -25,6 +25,18 @@ export const errorHandler = (err, req, res, next) => {
       .join(', ');
   }
 
+  // Handle MongoDB Connection / Timeout Errors
+  if (
+    err.name === 'MongooseServerSelectionError' ||
+    err.name === 'MongoServerSelectionError' ||
+    err.name === 'MongoNetworkError' ||
+    err.name === 'MongoTimeoutError' ||
+    err.message?.includes('buffering timed out')
+  ) {
+    statusCode = 503;
+    message = 'Database operation timed out or connection is unavailable. Please verify MONGODB_URI and MongoDB Atlas network access.';
+  }
+
   res.status(statusCode).json({
     success: false,
     message,

@@ -1,7 +1,14 @@
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import app from './app.js';
 import { connectDB } from './config/db.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from server directory first, fallback to root .env
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config();
 
 const PORT = process.env.PORT || 5001;
@@ -22,8 +29,8 @@ const startServer = async () => {
   try {
     await connectDB();
   } catch (error) {
-    console.error(`[Database Connection Warning]: ${error.message}`);
-    console.error('Server will continue running. Verify MONGODB_URI and IP whitelist in Atlas.');
+    console.error(`[Database Connection Notice]: ${error.message}`);
+    console.log('[Database Status]: Server is actively listening for requests. Configure MONGODB_URI in Render dashboard to enable full database operations.');
   }
 
   return server;

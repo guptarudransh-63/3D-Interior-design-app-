@@ -3,6 +3,8 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Route imports
@@ -14,6 +16,11 @@ import projectRoutes from './routes/projectRoutes.js';
 import proposalRoutes from './routes/proposalRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from server directory first, then fallback to root
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config();
 
 const app = express();
@@ -78,14 +85,34 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Database connection guard for database-dependent routes
+const requireDB = (req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+
+  // readyState: 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+  if (mongoose.connection.readyState === 0) {
+    return res.status(503).json({
+      success: false,
+      message:
+        'Database is currently unavailable. Please verify MONGODB_URI is set in your Render environment variables and MongoDB Atlas allows incoming connections.',
+      code: 'DATABASE_UNAVAILABLE',
+      database: 'disconnected',
+    });
+  }
+
+  next();
+};
+
 // API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/material-options', materialRoutes);
-app.use('/api/room-concepts', roomConceptRoutes);
-app.use('/api/designs', savedDesignRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/proposals', proposalRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/auth', requireDB, authRoutes);
+app.use('/api/material-options', requireDB, materialRoutes);
+app.use('/api/room-concepts', requireDB, roomConceptRoutes);
+app.use('/api/designs', requireDB, savedDesignRoutes);
+app.use('/api/projects', requireDB, projectRoutes);
+app.use('/api/proposals', requireDB, proposalRoutes);
+app.use('/api/admin', requireDB, adminRoutes);
 
 // 404 Handler for undefined API routes
 app.use('/api/*', (req, res) => {

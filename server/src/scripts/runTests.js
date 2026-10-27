@@ -1,8 +1,14 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import app from '../app.js';
 import http from 'http';
+import { getMongoUri } from '../config/db.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
 
 let server;
@@ -32,7 +38,7 @@ const request = async (endpoint, options = {}) => {
 
 const runAllTests = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/spacecraft';
+    const mongoUri = getMongoUri();
     await mongoose.connect(mongoUri);
 
     server = http.createServer(app);
