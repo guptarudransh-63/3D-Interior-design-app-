@@ -92,6 +92,7 @@ app.get('/', (req, res) => {
       status: dbStates[mongoose.connection.readyState] || 'disconnected',
       readyState: mongoose.connection.readyState,
       uriConfigured: hasUri,
+      connectedHost: mongoose.connection.host || null,
       lastError: getLastDbError() || null,
     },
     timestamp: new Date().toISOString(),
@@ -115,6 +116,7 @@ app.get('/api/health', (req, res) => {
       status: dbStates[mongoose.connection.readyState] || 'disconnected',
       readyState: mongoose.connection.readyState,
       uriConfigured: hasUri,
+      connectedHost: mongoose.connection.host || null,
       lastError: getLastDbError() || null,
     },
   });

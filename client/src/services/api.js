@@ -37,7 +37,7 @@ const safeFetch = async (url, options = {}) => {
       }
       console.error(`[API Network Failure]: Failed to reach ${url}:`, err);
       throw new Error(
-        `Network connection failed to ${targetHost}. Please ensure your Vercel VITE_API_URL points to your active Render URL (https://threed-interior-design-app.onrender.com) and the backend is live.`
+        `Network connection failed to ${targetHost}. Please ensure your Vercel VITE_API_URL points to your active Render URL (https://threed-interior-design-app-1.onrender.com) and the backend is live.`
       );
     }
     throw err;

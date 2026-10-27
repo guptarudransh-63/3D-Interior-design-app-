@@ -20,15 +20,28 @@ export const getMongoUri = () => {
     process.env.MONGO_URI ||
     process.env.DATABASE_URL;
 
-  if (envUri && envUri.trim()) {
-    return envUri.trim();
-  }
-
   const isCloudHost =
     process.env.NODE_ENV === 'production' ||
     Boolean(process.env.RENDER) ||
     Boolean(process.env.VERCEL) ||
     Boolean(process.env.RENDER_SERVICE_ID);
+
+  if (envUri && envUri.trim()) {
+    const trimmed = envUri.trim();
+
+    // Check if user accidentally pasted localhost / 127.0.0.1 into Render environment
+    if (isCloudHost && (trimmed.includes('127.0.0.1') || trimmed.includes('localhost'))) {
+      const errorMsg =
+        '[MongoDB Configuration Error]: MONGODB_URI on Render is currently set to localhost / 127.0.0.1! ' +
+        'Render runs in the cloud and cannot connect to a database on your personal computer. ' +
+        'You must replace MONGODB_URI in your Render Dashboard (Environment tab) with your remote MongoDB Atlas URI ' +
+        '(e.g., mongodb+srv://<username>:<password>@cluster0.abcde.mongodb.net/spacecraft?retryWrites=true&w=majority).';
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    return trimmed;
+  }
 
   if (isCloudHost) {
     const errorMsg =
