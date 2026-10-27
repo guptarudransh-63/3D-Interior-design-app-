@@ -9,9 +9,9 @@
 | Deliverable | Details / Links |
 | :--- | :--- |
 | **GitHub Repository** | [https://github.com/guptarudransh-63/3D-Interior-design-app-](https://github.com/guptarudransh-63/3D-Interior-design-app-) (Public) |
-| **Live Deployed App** | *[Insert Deployed Application URL]* (e.g. Vercel / Render / Netlify) |
+| **Live Deployed App** | https://3dinteriordesignapp-aeidjepz0-rudransh17.vercel.app/ (e.g. Vercel / Render / Netlify) |
 | **Production Build** | Verified and generated in `client/dist/` (`npm run build` / `npm run preview`) |
-| **Video Demonstration** | *[Insert Demo Video URL]* (YouTube / Loom / Google Drive — access set to **"Anyone with link"**) |
+| **Video Demonstration** | https://drive.google.com/drive/folders/1U5TUJqoNnq-4SIAD8SfCyfA2po8zyNjm?usp=sharing (YouTube / Loom / Google Drive — access set to **"Anyone with link"**) |
 | **Pre-loaded Demo Accounts** | **1-Click Persona Switcher** built directly into the navbar, or manual login (see Section 6) |
 | **Security Audit** | Clean — zero API keys, secrets, or sensitive credentials tracked in Git |
 
