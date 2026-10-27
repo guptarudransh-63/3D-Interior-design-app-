@@ -87,6 +87,7 @@ app.get('/', (req, res) => {
       health: '/api/health',
       catalog: '/api/room-concepts',
       materials: '/api/material-options',
+      seed: '/api/seed-demo',
     },
     database: {
       status: dbStates[mongoose.connection.readyState] || 'disconnected',
@@ -97,6 +98,18 @@ app.get('/', (req, res) => {
     },
     timestamp: new Date().toISOString(),
   });
+});
+
+// Diagnostic / Evaluation Endpoint to populate or verify demo catalog & personas
+app.all('/api/seed-demo', async (req, res) => {
+  try {
+    const { safeSeedCatalog } = await import('./services/catalogSeeder.js');
+    const result = await safeSeedCatalog();
+    res.json({ success: true, message: 'Demo catalog & personas successfully ensured', result });
+  } catch (error) {
+    console.error('[Seed Demo Endpoint Error]:', error);
+    res.status(500).json({ success: false, error: error.message, stack: error.stack });
+  }
 });
 
 // Health check endpoint
