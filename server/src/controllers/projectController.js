@@ -2,6 +2,7 @@ import { Project, ALLOWED_STATUS_TRANSITIONS } from '../models/Project.js';
 import { SavedDesign } from '../models/SavedDesign.js';
 import { ProjectActivity } from '../models/ProjectActivity.js';
 import { Proposal } from '../models/Proposal.js';
+import { safeSeedCatalog } from '../services/catalogSeeder.js';
 
 // @desc    Create a new project brief
 // @route   POST /api/projects
@@ -108,6 +109,15 @@ export const createProject = async (req, res, next) => {
 // @access  Private
 export const getProjects = async (req, res, next) => {
   try {
+    const totalProjects = await Project.countDocuments();
+    if (totalProjects === 0) {
+      try {
+        await safeSeedCatalog();
+      } catch (seedErr) {
+        console.warn(`[Projects Auto-Seed Notice]: ${seedErr.message}`);
+      }
+    }
+
     const { status, roomType, search } = req.query;
     const query = {};
 

@@ -694,19 +694,24 @@ export const ensureDummyProjectsAndProposals = async (userMap, materialMap) => {
       return;
     }
 
-    const clientUser = userMap['client@spacecraft.com'];
-    const designerUser = userMap['designer@spacecraft.com'];
-    const sarahUser = userMap['sarah@spacecraft.com'];
+    const users = userMap || (await ensureDemoUsers());
+    const clientUser = users['client@spacecraft.com'] || (await User.findOne({ email: 'client@spacecraft.com' }));
+    const designerUser = users['designer@spacecraft.com'] || (await User.findOne({ email: 'designer@spacecraft.com' }));
+    const sarahUser = users['sarah@spacecraft.com'] || (await User.findOne({ email: 'sarah@spacecraft.com' }));
 
     if (!clientUser || !designerUser || !sarahUser) {
-      console.warn('[Demo Data]: Required users not found. Skipping dummy projects.');
+      console.warn('[Demo Data]: Could not resolve required demo users. Skipping dummy projects.');
       return;
     }
 
     // Material getters
-    const getMatId = (partialName) => {
-      const key = Object.keys(materialMap).find((k) => k.includes(partialName));
-      return key ? materialMap[key] : Object.values(materialMap)[0];
+    const getMatId = async (partialName) => {
+      if (materialMap) {
+        const key = Object.keys(materialMap).find((k) => k.includes(partialName));
+        if (key) return materialMap[key];
+      }
+      const mat = await MaterialOption.findOne({ name: { $regex: partialName, $options: 'i' } });
+      return mat ? mat._id : (await MaterialOption.findOne())._id;
     };
 
     const livingConcept = await RoomConcept.findOne({ slug: 'aura-minimalist-living-salon' });
@@ -720,10 +725,10 @@ export const ensureDummyProjectsAndProposals = async (userMap, materialMap) => {
       owner: clientUser._id,
       roomConcept: livingConcept?._id || null,
       selectedMaterials: {
-        flooring: getMatId('Terrazzo'),
-        walls: getMatId('Sage'),
-        cabinetry: getMatId('Ash Joinery'),
-        accent: getMatId('Bouclé'),
+        flooring: await getMatId('Terrazzo'),
+        walls: await getMatId('Sage'),
+        cabinetry: await getMatId('Ash Joinery'),
+        accent: await getMatId('Bouclé'),
       },
       notes: 'Prefer light terrazzo flooring with contrasting sage mineral walls. Need acoustic dampening for high ceilings.',
       customDimensions: { lengthFt: 22, widthFt: 16, areaSqFt: 352 },
@@ -735,10 +740,10 @@ export const ensureDummyProjectsAndProposals = async (userMap, materialMap) => {
       owner: clientUser._id,
       roomConcept: kitchenConcept?._id || null,
       selectedMaterials: {
-        flooring: getMatId('Micro-Cement'),
-        walls: getMatId('Alabaster'),
-        cabinetry: getMatId('Bone Lacquer'),
-        accent: getMatId('Bronze'),
+        flooring: await getMatId('Micro-Cement'),
+        walls: await getMatId('Alabaster'),
+        cabinetry: await getMatId('Bone Lacquer'),
+        accent: await getMatId('Bronze'),
       },
       notes: 'Clean lines with flush induction cooktop and concealed pantry doors.',
       customDimensions: { lengthFt: 20, widthFt: 14, areaSqFt: 280 },
@@ -751,10 +756,10 @@ export const ensureDummyProjectsAndProposals = async (userMap, materialMap) => {
       owner: sarahUser._id,
       roomConcept: bedroomConcept?._id || null,
       selectedMaterials: {
-        flooring: getMatId('Smoked Belgian Walnut'),
-        walls: getMatId('Greige'),
-        cabinetry: getMatId('Fluted American Walnut'),
-        accent: getMatId('Terracotta'),
+        flooring: await getMatId('Smoked Belgian Walnut'),
+        walls: await getMatId('Greige'),
+        cabinetry: await getMatId('Fluted American Walnut'),
+        accent: await getMatId('Terracotta'),
       },
       notes: 'Calm restorative ryokan-inspired master bedroom with low platform bed.',
       customDimensions: { lengthFt: 18, widthFt: 14, areaSqFt: 252 },

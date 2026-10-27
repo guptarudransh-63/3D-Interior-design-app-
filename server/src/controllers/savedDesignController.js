@@ -1,12 +1,22 @@
 import { SavedDesign } from '../models/SavedDesign.js';
 import { RoomConcept } from '../models/RoomConcept.js';
 import { MaterialOption } from '../models/MaterialOption.js';
+import { safeSeedCatalog } from '../services/catalogSeeder.js';
 
 // @desc    Get all saved designs for current user
 // @route   GET /api/designs
 // @access  Private (Client / Admin)
 export const getSavedDesigns = async (req, res, next) => {
   try {
+    const totalDesigns = await SavedDesign.countDocuments();
+    if (totalDesigns === 0) {
+      try {
+        await safeSeedCatalog();
+      } catch (seedErr) {
+        console.warn(`[SavedDesign Auto-Seed Notice]: ${seedErr.message}`);
+      }
+    }
+
     const filter = req.user.role === 'admin' ? {} : { owner: req.user._id };
 
     const designs = await SavedDesign.find(filter)
