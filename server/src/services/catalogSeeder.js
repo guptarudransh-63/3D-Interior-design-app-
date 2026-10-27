@@ -937,7 +937,7 @@ export const ensureDummyProjectsAndProposals = async (userMap, materialMap) => {
       dimensions: { lengthFt: 18, widthFt: 14, heightFt: 9.5, areaSqFt: 252 },
       preferredStyle: 'Japandi',
       budgetRange: { min: 15000, max: 28000, currency: 'USD' },
-      timeline: '1 - 3 Months',
+      timeline: '1 - 2 Months',
       location: { city: 'Brooklyn', stateOrProvince: 'NY', country: 'United States' },
       requirementsDescription:
         'A restful master bedroom incorporating Japanese low platform principles, custom fluted walnut cabinetry, and organic textures.',
@@ -1011,7 +1011,7 @@ export const ensureDummyProjectsAndProposals = async (userMap, materialMap) => {
       dimensions: { lengthFt: 26, widthFt: 18, heightFt: 11, areaSqFt: 468 },
       preferredStyle: 'Industrial Loft',
       budgetRange: { min: 25000, max: 48000, currency: 'USD' },
-      timeline: '3 - 6 Months',
+      timeline: '4 - 6 Months',
       location: { city: 'New York', stateOrProvince: 'NY', country: 'United States' },
       requirementsDescription:
         'Open-concept loft conversion featuring custom bronze partitions, polished micro-cement, and industrial factory mullions.',
