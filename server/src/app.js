@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { errorHandler } from './middleware/errorHandler.js';
+import { connectDB, getLastDbError } from './config/db.js';
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';
@@ -74,6 +75,10 @@ if (process.env.NODE_ENV !== 'test') {
 // Root endpoint for platform ping & browser check
 app.get('/', (req, res) => {
   const dbStates = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  const hasUri = Boolean(
+    process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL
+  );
+
   res.json({
     name: 'SpaceCraft 3D Interior Design API',
     status: 'online',
@@ -83,7 +88,12 @@ app.get('/', (req, res) => {
       catalog: '/api/room-concepts',
       materials: '/api/material-options',
     },
-    database: dbStates[mongoose.connection.readyState] || 'disconnected',
+    database: {
+      status: dbStates[mongoose.connection.readyState] || 'disconnected',
+      readyState: mongoose.connection.readyState,
+      uriConfigured: hasUri,
+      lastError: getLastDbError() || null,
+    },
     timestamp: new Date().toISOString(),
   });
 });
@@ -91,34 +101,64 @@ app.get('/', (req, res) => {
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   const dbStates = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  const hasUri = Boolean(
+    process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL
+  );
+
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'SpaceCraft API',
     version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-    database: dbStates[mongoose.connection.readyState] || 'disconnected',
+    environment: process.env.NODE_ENV || (process.env.RENDER ? 'production' : 'development'),
+    database: {
+      status: dbStates[mongoose.connection.readyState] || 'disconnected',
+      readyState: mongoose.connection.readyState,
+      uriConfigured: hasUri,
+      lastError: getLastDbError() || null,
+    },
   });
 });
 
-// Database connection guard for database-dependent routes
-const requireDB = (req, res, next) => {
+// Database connection guard with automatic on-demand connection
+const requireDB = async (req, res, next) => {
   if (req.method === 'OPTIONS') {
     return next();
   }
 
-  // readyState: 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
-  if (mongoose.connection.readyState === 0) {
-    return res.status(503).json({
-      success: false,
-      message:
-        'Database is currently unavailable. Please verify MONGODB_URI is set in your Render environment variables and MongoDB Atlas allows incoming connections.',
-      code: 'DATABASE_UNAVAILABLE',
-      database: 'disconnected',
-    });
+  // 1. If already connected, proceed immediately
+  if (mongoose.connection.readyState === 1) {
+    return next();
   }
 
-  next();
+  // 2. If connecting or disconnected, attempt to establish/wait for connection
+  try {
+    console.log(`[Database Guard]: Mongoose state is ${mongoose.connection.readyState}. Attempting connection for ${req.method} ${req.originalUrl}...`);
+    await connectDB();
+    if (mongoose.connection.readyState === 1) {
+      return next();
+    }
+  } catch (err) {
+    console.error(`[Database Guard]: Connection attempt failed for ${req.originalUrl}:`, err.message);
+  }
+
+  // 3. If still not ready, return clean 503 with specific diagnostics
+  const lastErr = getLastDbError();
+  const hasUri = Boolean(
+    process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL
+  );
+
+  return res.status(503).json({
+    success: false,
+    message:
+      'Database is currently unavailable. Please verify MONGODB_URI is set in your Render environment variables and MongoDB Atlas allows incoming connections.',
+    code: 'DATABASE_UNAVAILABLE',
+    details: {
+      readyState: mongoose.connection.readyState,
+      uriConfigured: hasUri,
+      reason: lastErr || 'Connection could not be established',
+    },
+  });
 };
 
 // API Routes
