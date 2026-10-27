@@ -18,7 +18,7 @@ const HOST = '0.0.0.0';
 const startServer = async () => {
   const server = app.listen(PORT, HOST, () => {
     console.log(`[SpaceCraft Server Running]: http://${HOST}:${PORT}`);
-    console.log(`[Environment]: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`[Environment]: ${process.env.NODE_ENV || (process.env.RENDER ? 'production' : 'development')}`);
   });
 
   server.on('error', (err) => {

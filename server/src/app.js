@@ -72,6 +72,23 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
+// Root endpoint for platform ping & browser check
+app.get('/', (req, res) => {
+  const dbStates = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  res.json({
+    name: 'SpaceCraft 3D Interior Design API',
+    status: 'online',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      catalog: '/api/room-concepts',
+      materials: '/api/material-options',
+    },
+    database: dbStates[mongoose.connection.readyState] || 'disconnected',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   const dbStates = ['disconnected', 'connected', 'connecting', 'disconnecting'];

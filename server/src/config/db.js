@@ -20,17 +20,18 @@ export const getMongoUri = () => {
     return envUri.trim();
   }
 
-  const isProduction =
+  const isCloudHost =
     process.env.NODE_ENV === 'production' ||
     Boolean(process.env.RENDER) ||
-    Boolean(process.env.VERCEL);
+    Boolean(process.env.VERCEL) ||
+    Boolean(process.env.RENDER_SERVICE_ID);
 
-  if (isProduction) {
+  if (isCloudHost) {
     const errorMsg =
-      '[MongoDB Configuration Error]: MONGODB_URI environment variable is missing in production! ' +
+      '[MongoDB Configuration Error]: MONGODB_URI environment variable is missing on Render! ' +
       'Please add MONGODB_URI in your Render Dashboard (Environment tab) with your MongoDB Atlas connection string ' +
       '(e.g., mongodb+srv://<username>:<password>@cluster0.mongodb.net/spacecraft?retryWrites=true&w=majority). ' +
-      'Silently falling back to localhost (127.0.0.1:27017) is blocked in production.';
+      'Silently falling back to localhost (127.0.0.1:27017) is blocked on Render.';
     console.error(errorMsg);
     throw new Error(errorMsg);
   }
