@@ -4,6 +4,8 @@ import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import app from './app.js';
 import { connectDB } from './config/db.js';
+import { RoomConcept } from './models/RoomConcept.js';
+import { safeSeedCatalog } from './services/catalogSeeder.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +29,17 @@ const attemptDBConnection = async () => {
   try {
     await connectDB();
     console.log('[Database Status]: MongoDB connection established and ready for requests.');
+
+    // Ensure catalog data is present (safe & idempotent)
+    try {
+      const totalConcepts = await RoomConcept.countDocuments();
+      if (totalConcepts === 0) {
+        console.log('[Database Notice]: Empty room concept catalog detected. Seeding initial concepts & materials...');
+        await safeSeedCatalog();
+      }
+    } catch (seedErr) {
+      console.warn(`[Database Notice]: Automatic catalog seed check: ${seedErr.message}`);
+    }
   } catch (error) {
     console.error(`[Database Connection Notice]: ${error.message}`);
     console.log('[Database Status]: Server is actively listening. Will retry database connection in 10s...');

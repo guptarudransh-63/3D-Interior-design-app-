@@ -1,4 +1,5 @@
 import { MaterialOption } from '../models/MaterialOption.js';
+import { safeSeedCatalog } from '../services/catalogSeeder.js';
 
 // @desc    Get all material options
 // @route   GET /api/material-options
@@ -6,6 +7,16 @@ import { MaterialOption } from '../models/MaterialOption.js';
 export const getMaterialOptions = async (req, res, next) => {
   try {
     const { category } = req.query;
+
+    const count = await MaterialOption.countDocuments();
+    if (count === 0) {
+      try {
+        await safeSeedCatalog();
+      } catch (seedErr) {
+        console.warn(`[MaterialOption Auto-Seed Warning]: ${seedErr.message}`);
+      }
+    }
+
     const filter = { isActive: true };
 
     if (category) {

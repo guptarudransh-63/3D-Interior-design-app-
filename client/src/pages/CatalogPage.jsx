@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
-import { Search, Filter, ArrowRight, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Search, Filter, ArrowRight, SlidersHorizontal, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
 
 const ROOM_TYPES = ['All', 'Living Room', 'Bedroom', 'Kitchen', 'Dining Room', 'Home Office', 'Studio Apartment'];
 const DESIGN_STYLES = ['All', 'Warm Minimalist', 'Japandi', 'Scandinavian', 'Modern Architectural', 'Mediterranean Contemporary', 'Industrial Loft'];
@@ -10,6 +10,7 @@ export const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [concepts, setConcepts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   // Filter states
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -17,30 +18,34 @@ export const CatalogPage = () => {
   const [selectedStyle, setSelectedStyle] = useState(searchParams.get('designStyle') || 'All');
   const [sortBy, setSortBy] = useState('newest');
 
-  useEffect(() => {
-    const fetchConcepts = async () => {
-      setLoading(true);
-      try {
-        const params = {};
-        if (search) params.search = search;
-        if (selectedRoomType !== 'All') params.roomType = selectedRoomType;
-        if (selectedStyle !== 'All') params.designStyle = selectedStyle;
-        if (sortBy === 'budget-asc') params.sort = 'budget-asc';
-        if (sortBy === 'budget-desc') params.sort = 'budget-desc';
+  const fetchConcepts = useCallback(async () => {
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const params = {};
+      if (search) params.search = search;
+      if (selectedRoomType !== 'All') params.roomType = selectedRoomType;
+      if (selectedStyle !== 'All') params.designStyle = selectedStyle;
+      if (sortBy === 'budget-asc') params.sort = 'budget-asc';
+      if (sortBy === 'budget-desc') params.sort = 'budget-desc';
 
-        const res = await api.getRoomConcepts(params);
-        if (res.success) {
-          setConcepts(res.data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch concepts:', err);
-      } finally {
-        setLoading(false);
+      const res = await api.getRoomConcepts(params);
+      if (res.success) {
+        setConcepts(res.data || []);
+      } else {
+        setFetchError(res.message || 'Unable to load room concepts from server.');
       }
-    };
-
-    fetchConcepts();
+    } catch (err) {
+      console.error('Failed to fetch concepts:', err);
+      setFetchError(err.message || 'Network error connecting to SpaceCraft API. Please verify server status.');
+    } finally {
+      setLoading(false);
+    }
   }, [search, selectedRoomType, selectedStyle, sortBy]);
+
+  useEffect(() => {
+    fetchConcepts();
+  }, [fetchConcepts]);
 
   const handleRoomTypeChange = (type) => {
     setSelectedRoomType(type);
@@ -138,6 +143,23 @@ export const CatalogPage = () => {
         <div className="py-20 text-center">
           <div className="inline-block w-8 h-8 border-2 border-charcoal-900 border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-xs text-charcoal-700">Loading architectural room concepts...</p>
+        </div>
+      ) : fetchError ? (
+        <div className="py-14 text-center bg-red-50/60 rounded-md border border-red-200 p-8 max-w-xl mx-auto space-y-3">
+          <AlertCircle className="w-8 h-8 text-red-600 mx-auto" />
+          <h3 className="font-editorial text-lg font-medium text-charcoal-900">
+            Unable to Load Room Concepts
+          </h3>
+          <p className="text-xs text-charcoal-700 leading-relaxed">
+            {fetchError}
+          </p>
+          <button
+            onClick={() => fetchConcepts()}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-charcoal-900 text-ivory-100 hover:bg-charcoal-800 rounded-xs text-xs font-medium transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Retry Connection</span>
+          </button>
         </div>
       ) : concepts.length === 0 ? (
         <div className="py-20 text-center bg-ivory-50 rounded-md border border-dashed border-stone-accent/60 p-8">

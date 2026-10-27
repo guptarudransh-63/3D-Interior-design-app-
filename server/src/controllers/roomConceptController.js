@@ -1,4 +1,5 @@
 import { RoomConcept } from '../models/RoomConcept.js';
+import { safeSeedCatalog } from '../services/catalogSeeder.js';
 
 // @desc    Get all room concepts with filtering & search
 // @route   GET /api/room-concepts
@@ -6,6 +7,16 @@ import { RoomConcept } from '../models/RoomConcept.js';
 export const getRoomConcepts = async (req, res, next) => {
   try {
     const { roomType, designStyle, search, featured, sort, limit = 20, page = 1 } = req.query;
+
+    // Self-healing: if the catalog is completely empty, populate default curated room concepts
+    const currentConceptCount = await RoomConcept.countDocuments();
+    if (currentConceptCount === 0) {
+      try {
+        await safeSeedCatalog();
+      } catch (seedErr) {
+        console.warn(`[RoomConcept Auto-Seed Warning]: ${seedErr.message}`);
+      }
+    }
 
     const query = {};
 
@@ -15,11 +26,13 @@ export const getRoomConcepts = async (req, res, next) => {
     }
 
     if (roomType && roomType !== 'All') {
-      query.roomType = roomType;
+      // Case-insensitive exact match
+      query.roomType = { $regex: new RegExp(`^${roomType.trim()}$`, 'i') };
     }
 
     if (designStyle && designStyle !== 'All') {
-      query.designStyle = designStyle;
+      // Case-insensitive exact match
+      query.designStyle = { $regex: new RegExp(`^${designStyle.trim()}$`, 'i') };
     }
 
     if (featured === 'true') {
@@ -77,12 +90,29 @@ export const getRoomConcepts = async (req, res, next) => {
 // @access  Public
 export const getRoomConceptBySlug = async (req, res, next) => {
   try {
-    const concept = await RoomConcept.findOne({ slug: req.params.slug })
+    let concept = await RoomConcept.findOne({ slug: req.params.slug })
       .populate('availableMaterials')
       .populate('defaultSelections.flooring')
       .populate('defaultSelections.walls')
       .populate('defaultSelections.cabinetry')
       .populate('defaultSelections.accent');
+
+    if (!concept) {
+      const currentConceptCount = await RoomConcept.countDocuments();
+      if (currentConceptCount === 0) {
+        try {
+          await safeSeedCatalog();
+          concept = await RoomConcept.findOne({ slug: req.params.slug })
+            .populate('availableMaterials')
+            .populate('defaultSelections.flooring')
+            .populate('defaultSelections.walls')
+            .populate('defaultSelections.cabinetry')
+            .populate('defaultSelections.accent');
+        } catch (seedErr) {
+          console.warn(`[RoomConcept Auto-Seed Warning]: ${seedErr.message}`);
+        }
+      }
+    }
 
     if (!concept) {
       return res.status(404).json({
