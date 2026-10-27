@@ -6,6 +6,7 @@ import app from './app.js';
 import { connectDB } from './config/db.js';
 import { RoomConcept } from './models/RoomConcept.js';
 import { Project } from './models/Project.js';
+import { User } from './models/User.js';
 import { safeSeedCatalog } from './services/catalogSeeder.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -34,9 +35,10 @@ const attemptDBConnection = async () => {
     // Ensure catalog data and demo personas are present (safe & idempotent)
     try {
       const totalConcepts = await RoomConcept.countDocuments();
-      const totalProjects = await Project.countDocuments();
-      if (totalConcepts < 12 || totalProjects === 0) {
-        console.log(`[Database Notice]: Curating full 12 architectural room concepts & demo data (concepts: ${totalConcepts}, projects: ${totalProjects})...`);
+      const marcusUser = await User.findOne({ email: 'client@spacecraft.com' });
+      const marcusProjects = marcusUser ? await Project.countDocuments({ client: marcusUser._id }) : 0;
+      if (totalConcepts < 12 || marcusProjects === 0) {
+        console.log(`[Database Notice]: Curating full 12 architectural room concepts & demo data (concepts: ${totalConcepts}, marcusProjects: ${marcusProjects})...`);
         await safeSeedCatalog();
       }
     } catch (seedErr) {

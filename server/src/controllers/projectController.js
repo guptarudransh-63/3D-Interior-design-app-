@@ -2,6 +2,7 @@ import { Project, ALLOWED_STATUS_TRANSITIONS } from '../models/Project.js';
 import { SavedDesign } from '../models/SavedDesign.js';
 import { ProjectActivity } from '../models/ProjectActivity.js';
 import { Proposal } from '../models/Proposal.js';
+import { User } from '../models/User.js';
 import { safeSeedCatalog } from '../services/catalogSeeder.js';
 
 // @desc    Create a new project brief
@@ -109,8 +110,9 @@ export const createProject = async (req, res, next) => {
 // @access  Private
 export const getProjects = async (req, res, next) => {
   try {
-    const totalProjects = await Project.countDocuments();
-    if (totalProjects === 0) {
+    const marcusUser = await User.findOne({ email: 'client@spacecraft.com' });
+    const marcusProjects = marcusUser ? await Project.countDocuments({ client: marcusUser._id }) : 0;
+    if (marcusProjects === 0) {
       try {
         await safeSeedCatalog();
       } catch (seedErr) {

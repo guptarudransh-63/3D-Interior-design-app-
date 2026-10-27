@@ -688,12 +688,6 @@ export const safeSeedCatalog = async () => {
  */
 export const ensureDummyProjectsAndProposals = async (userMap, materialMap) => {
   try {
-    const existingProjectsCount = await Project.countDocuments();
-    if (existingProjectsCount > 0) {
-      console.log(`[Demo Data]: Projects already exist (${existingProjectsCount} found). Skipping dummy project seeding.`);
-      return;
-    }
-
     const users = userMap || (await ensureDemoUsers());
     const clientUser = users['client@spacecraft.com'] || (await User.findOne({ email: 'client@spacecraft.com' }));
     const designerUser = users['designer@spacecraft.com'] || (await User.findOne({ email: 'designer@spacecraft.com' }));
@@ -701,6 +695,12 @@ export const ensureDummyProjectsAndProposals = async (userMap, materialMap) => {
 
     if (!clientUser || !designerUser || !sarahUser) {
       console.warn('[Demo Data]: Could not resolve required demo users. Skipping dummy projects.');
+      return;
+    }
+
+    const marcusProjectsCount = await Project.countDocuments({ client: clientUser._id });
+    if (marcusProjectsCount > 0) {
+      console.log(`[Demo Data]: Demo projects already exist for Marcus Sterling (${marcusProjectsCount} found).`);
       return;
     }
 
